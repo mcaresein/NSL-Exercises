@@ -32,8 +32,16 @@ Path::Path(int ncities, Random& rnd) {
 
 void Path::PrintPath(){ for (int i=0; i<path.size(); i++) cout << path[i] << " "; cout << endl;};
 vector<int> Path::GetPath(){return path;}
-void Path::SetPath(vector<int> newpath){path=newpath;}
+void Path::SetPath(vector<int> newpath){
+    if(path.size()!=newpath.size()) {cerr << "I due path non sono lunghi uguali " << endl; exit(-1);}
+    for(int i=0; i< path.size(); i++) path[i]=newpath[i];
+  }
+void Path::SetElem(int element, int index){path[index]=element;}
+void Path::DropLast(){path.erase(path.end()-1);}
+void Path::Append(int elem){path.insert(path.begin(),elem); this->Shift(1);}
 int Path::GetLength(){return path.size();}
+void Path::Erase(int i){path.erase(path.begin()+i);}
+Path::iterator Path::IsIn(int elem, int index){return find(path.begin()+index ,path.end(),elem); }
 
 
 int Path::CheckPath(){
@@ -52,7 +60,7 @@ void Path::Swap(unsigned int index_a, unsigned int index_b){
     path=::Swap(path, IndexPBC(index_a, path.size()), IndexPBC(index_b, path.size()) );
 }
 
-void Path::Shift(unsigned int nshifts){     // cicli antiorari : (012)->(210)
+void Path::Shift(unsigned int nshifts){     // cicli antiorari : (012)->(120)
     int ishifts=0;
     while(ishifts<nshifts){
          for(int ilength=0; ilength<path.size()-1; ilength++){ this->Swap(IndexPBC(ilength, path.size()), IndexPBC(1+ilength, path.size()) );}
@@ -103,10 +111,40 @@ int RoadBook::CheckRoadBook(){       //O INT VISTO CHE CHECKPATH E' INT????
     }
     return 0;
 }
+void RoadBook::Crossover(Random& rnd){
+  int i= rnd.Rannyu(0, this->GetRoadBookSize());
+  int j= rnd.Rannyu(0, this->GetRoadBookSize());
 
+  vector<int> mom=roadbook[i].GetPath();  vector <int> om=mom;
+  vector<int> dad=roadbook[j].GetPath();  vector <int> ad=dad;
 
+  int cut=rnd.Rannyu(0, roadbook[i].GetLength()); //cout << cut << endl;
 
-Sehenswurdigkeiten::Sehenswurdigkeiten(vector<int> x_of_cities, vector<int> y_of_cities){
+  for(int k=0; k<om.size();  k++){
+      if (find(mom.begin()+cut,mom.end(),ad[k]) == mom.end()){
+        ad.erase(ad.begin()+k); k--;
+      }
+  }
+
+  for(int k=0; k<ad.size();  k++){
+      if (find(dad.begin()+cut,dad.end(),om[k]) == dad.end()){
+        om.erase(om.begin()+k); k--;
+      }
+  }
+
+  for(int k=0; k<mom.size(); k++){
+      mom[k+cut]=ad[k];
+      dad[k+cut]=om[k];
+  }
+
+  roadbook[i].SetPath(mom);
+  roadbook[j].SetPath(dad);
+
+  //roadbook[j].CheckPath();
+
+}
+
+Sehenswurdigkeiten::Sehenswurdigkeiten(vector<double> x_of_cities, vector<double> y_of_cities){
     vector<City> m_sehenswurdigkeiten(x_of_cities.size());
     for(int i=0; i<x_of_cities.size(); i++){
         m_sehenswurdigkeiten[i].x=x_of_cities[i];

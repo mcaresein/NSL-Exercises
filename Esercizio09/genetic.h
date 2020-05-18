@@ -20,13 +20,17 @@ std::vector<int> Swap(int*, int, int);
 void RandomPermute(int*, int);
 
 //oggetti da simulare
-class Path : public std::vector<int>{
+class Path : private std::vector<int>{
     public:
         Path(int, Random&);     //costruisce una sentiero di città
 
         std::vector<int> GetPath();
-        void SetPath(std::vector<int>);
-
+        void SetPath(vector<int>);
+        void SetElem(int, int);
+        void DropLast();
+        void Append(int);
+        void Erase(int);
+        iterator IsIn(int, int);
         int CheckPath();
         void PrintPath();
         int GetLength();
@@ -37,6 +41,11 @@ class Path : public std::vector<int>{
         void GroupSwap(Random&);
         void GroupShift(Random&);
         void Inversion(Random&);
+
+        using vector::begin;
+        using vector::end;
+        using vector::iterator;
+
     private:
         std::vector<int> path;
 };
@@ -47,14 +56,14 @@ class RoadBook: public Path {
         vector<Path> GetRoadBook();
         int CheckRoadBook();//VOID O INT VISTO CHE CHECKPATH E' INT????
         int GetRoadBookSize();
+        void Crossover(Random&);
     private:
         std::vector<Path> roadbook;
 };
 
-
 class Sehenswurdigkeiten{
     public:
-      Sehenswurdigkeiten(std::vector<int>, std::vector<int>);
+      Sehenswurdigkeiten(std::vector<double>, std::vector<double>);
       std::vector<City> GetSehenswurdigkeiten();
       int GetLength();
       double GetDistance(Path);
@@ -63,6 +72,8 @@ class Sehenswurdigkeiten{
     private:
       std::vector<City> sehenswurdigkeiten;
 };
+
+
 
 
 #endif

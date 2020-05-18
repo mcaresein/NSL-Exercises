@@ -11,23 +11,57 @@ _/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
 #include <iostream>
 #include <fstream>
 #include <string>
-//#include "random.h"
+#include "variables.h"
 #include "genetic.h"
-
-int NUMBER_OF_CITIES;
-int MOVES_PER_TEMPERATURE;
-double T_MIN;
-double T_MAX;
-int T_STEPS;
-
-double beta, temperature;
-
-int accepted, attempted;
-int iprint;
+#include "functions.h"
 
 using namespace std;
 
 Random rnd;
+
+int main(){
+  InitializeRandomNumberGenerator();
+  Input();
+  //cout << NUMBER_OF_CITIES;
+  Sehenswurdigkeiten square(x_of_cities[0], y_of_cities[0]);
+  Sehenswurdigkeiten circle(x_of_cities[1], y_of_cities[1]);
+
+  RoadBook rdbk(NUMBER_OF_PATHS,NUMBER_OF_CITIES, rnd);
+  UpdateProbabilities(rdbk, square);
+
+  for(int i=0; i<NUMBER_OF_PATHS; i++){
+//      cout << probabilities[i]<< endl;
+  }
+  // for(int i=0; i<NUMBER_OF_PATHS; i++){
+  //     rdbk.GetRoadBook()[i].PrintPath();
+  // }
+
+  rdbk.Crossover(rnd);
+
+  return 0;
+}
+
+void Input(){
+  /*un po' barocco (come il resto del codice del resto):
+  lo script di python produce le due mappe con le stesse città ed il numero è salvato nella prima riga del primo file prodotto, ovvero squareworld*/
+  ifstream citiescoordinates[2];
+  citiescoordinates[0].open("squareworld");
+  citiescoordinates[1].open("circleworld");
+  citiescoordinates[0] >> NUMBER_OF_CITIES;
+
+  x_of_cities.resize(2, vector<double>(NUMBER_OF_CITIES,0));
+  y_of_cities.resize(2, vector<double>(NUMBER_OF_CITIES,0));
+
+
+
+  for (int i= 0; i < NUMBER_OF_CITIES; i++){
+    citiescoordinates[0]>> x_of_cities[0][i] >> y_of_cities[0][i];
+    citiescoordinates[1]>> x_of_cities[1][i] >> y_of_cities[1][i];
+  }
+  probabilities.resize(NUMBER_OF_PATHS,0);
+
+}
+
 void InitializeRandomNumberGenerator(){
   int seed[4];
   int p1, p2;
@@ -56,23 +90,13 @@ void InitializeRandomNumberGenerator(){
      // rnd.SaveSeed();
 };
 
-
-int main (int argc, char *argv[]){
-
-  InitializeRandomNumberGenerator();
-  Path p(4, rnd);
-  p.PrintPath();
-  //cout << p.GetLength();
-
-  City c;
-  vector<int> x_of_cities, y_of_cities;
-  x_of_cities={0, 0, 2, 2};
-  y_of_cities={0, 2, 0, 2};
-  Sehenswurdigkeiten cities(x_of_cities, y_of_cities);
-  cities.PrintSehenswurdigkeiten("cane",p);
-  return 0;
-}
-
+void UpdateProbabilities(RoadBook rdbk, Sehenswurdigkeiten cities){
+  double sumprob=0;
+  for(int i=0; i<NUMBER_OF_PATHS; i++){
+      probabilities[i]=cities.GetDistance(rdbk.GetRoadBook()[i]);
+      sumprob+=probabilities[i];
+  }
+  for(int i=0; i<NUMBER_OF_PATHS; i++) probabilities[i]/=sumprob;
 
 /****************************************************************
 *****************************************************************
@@ -82,4 +106,4 @@ int main (int argc, char *argv[]){
  _/    _/       _/ _/       Prof. D.E. Galli
 _/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
 *****************************************************************
-*****************************************************************/
+*****************************************************************/}
