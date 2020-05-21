@@ -22,7 +22,6 @@ Random rnd;
 int main(){
   InitializeRandomNumberGenerator();
   Input();
-  //cout << NUMBER_OF_CITIES;
   Sehenswurdigkeiten square(x_of_cities[0], y_of_cities[0]);
   Sehenswurdigkeiten circle(x_of_cities[1], y_of_cities[1]);
 
@@ -30,13 +29,32 @@ int main(){
   UpdateProbabilities(rdbk, square);
 
   for(int i=0; i<NUMBER_OF_PATHS; i++){
-//      cout << probabilities[i]<< endl;
+      cout << probabilities[i]<< " " ;
+  } cout << endl;
+  for(int i=0; i<NUMBER_OF_PATHS; i++){
+      rdbk.GetRoadBook()[i].PrintPath();
   }
-  // for(int i=0; i<NUMBER_OF_PATHS; i++){
-  //     rdbk.GetRoadBook()[i].PrintPath();
-  // }
 
-  rdbk.Crossover(rnd);
+  // for (int i = 0; i < NUMBER_OF_GENERATIONS; i++){
+  //       cout << i << endl;
+  //       if (rnd.Rannyu()>0.5) rdbk.Crossover(rnd);
+  //
+  //       rdbk.Mutate(rnd);
+  //     UpdateProbabilities(rdbk, square);
+  //     for(int i=0; i<NUMBER_OF_PATHS; i++){
+  //         rdbk.GetRoadBook()[i].PrintPath();
+  //     }
+  // }
+  GiveBirth(rdbk, rnd, NUMBER_OF_GENERATIONS, square);
+  cout << "ajghhhj"<< endl;
+
+
+  for(int i=0; i<NUMBER_OF_PATHS; i++){
+    rdbk.GetRoadBook()[i].CheckPath();
+  }
+  for(int i=0; i<NUMBER_OF_PATHS; i++){
+      cout << probabilities[i]<< " ";
+  }
 
   return 0;
 }
@@ -97,6 +115,15 @@ void UpdateProbabilities(RoadBook rdbk, Sehenswurdigkeiten cities){
       sumprob+=probabilities[i];
   }
   for(int i=0; i<NUMBER_OF_PATHS; i++) probabilities[i]/=sumprob;
+} //è l'operatore di selezione
+
+void GiveBirth(RoadBook& rdbk, Random& rnd, int NUMBER_OF_GENERATIONS, Sehenswurdigkeiten square){
+  for (int i = 0; i < NUMBER_OF_GENERATIONS; i++){
+    if (rnd.Rannyu()>0.5) rdbk.Crossover(rnd);
+    rdbk.Mutate(rnd);
+    UpdateProbabilities(rdbk, square);
+  }
+}
 
 /****************************************************************
 *****************************************************************
@@ -106,4 +133,4 @@ void UpdateProbabilities(RoadBook rdbk, Sehenswurdigkeiten cities){
  _/    _/       _/ _/       Prof. D.E. Galli
 _/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
 *****************************************************************
-*****************************************************************/}
+*****************************************************************/

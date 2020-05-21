@@ -38,9 +38,13 @@ class Path : private std::vector<int>{
         //mutazioni
         void Swap(unsigned int, unsigned int);
         void Shift(unsigned int);
+
+        void Swap(Random&);
+        void Shift(Random&);
         void GroupSwap(Random&);
         void GroupShift(Random&);
         void Inversion(Random&);
+
 
         using vector::begin;
         using vector::end;
@@ -57,6 +61,8 @@ class RoadBook: public Path {
         int CheckRoadBook();//VOID O INT VISTO CHE CHECKPATH E' INT????
         int GetRoadBookSize();
         void Crossover(Random&);
+        void Mutate(Random&);
+
     private:
         std::vector<Path> roadbook;
 };

@@ -5,9 +5,11 @@
 #include <algorithm>
 #include <fstream>
 
-
-
 using namespace std;
+
+
+typedef  void (Path::* MutationsPTR) (Random&);
+enum MUTATIONS { INVERSION=0, SHIFT=1, SWAP=2, GROUPSWAP=3, GROUPSHIFT=4};
 
 //funzione che miracolosamente mette le pbc sull'indice i di un vettore lungo length
 int IndexPBC(int i, int length){
@@ -68,6 +70,11 @@ void Path::Shift(unsigned int nshifts){     // cicli antiorari : (012)->(120)
     }
 }
 
+
+void Path::Swap(Random& rnd){this->Swap(rnd.Rannyu(0, this->GetLength()), rnd.Rannyu(0, this->GetLength()));}
+
+void Path::Shift(Random& rnd){this->Shift(rnd.Rannyu(0, this->GetLength()));}
+
 void Path::GroupShift(Random& rnd){ //warning floating point exception
   int begin=rnd.Rannyu(0, path.size()/2.);
   int end=rnd.Rannyu(begin, path.size());
@@ -88,9 +95,12 @@ void Path::Inversion(Random& rnd){
   unsigned int end=rnd.Rannyu(0,path.size());
   unsigned int start=rnd.Rannyu(0,end);
   //cout << start << " " << end <<  endl;
-  for(int i=0; i<(end-start)/2; i++){ this->Swap(start+i, end-i);
+  for(int i=0; i<(end-start+1)/2; i++){ this->Swap(start+i, end-i);
   }
 }
+
+
+
 
 
 RoadBook::RoadBook(unsigned int npaths, unsigned int ncities, Random& rnd): Path(ncities, rnd){
@@ -111,18 +121,30 @@ int RoadBook::CheckRoadBook(){       //O INT VISTO CHE CHECKPATH E' INT????
     }
     return 0;
 }
+
 void RoadBook::Crossover(Random& rnd){
   int i= rnd.Rannyu(0, this->GetRoadBookSize());
   int j= rnd.Rannyu(0, this->GetRoadBookSize());
+  if (i=j) j= rnd.Rannyu(0, this->GetRoadBookSize());
+  cout << i << j << endl;
 
   vector<int> mom=roadbook[i].GetPath();  vector <int> om=mom;
   vector<int> dad=roadbook[j].GetPath();  vector <int> ad=dad;
+  cout << "ahj" << roadbook[i].GetLength()<< endl;
+  int cut=rnd.Rannyu(0, roadbook[i].GetLength());
+  //cout << cut << endl;
 
-  int cut=rnd.Rannyu(0, roadbook[i].GetLength()); //cout << cut << endl;
+  //roadbook[4].PrintPath();
+
+
+  // for(int k=0; k<mom.size(); k++) cout << mom[k];
+  // cout << endl;
+  // for(int k=0; k<mom.size(); k++) cout << dad[k];
+  // cout << endl;
 
   for(int k=0; k<om.size();  k++){
       if (find(mom.begin()+cut,mom.end(),ad[k]) == mom.end()){
-        ad.erase(ad.begin()+k); k--;
+         ad.erase(ad.begin()+k); k--;
       }
   }
 
@@ -136,6 +158,10 @@ void RoadBook::Crossover(Random& rnd){
       mom[k+cut]=ad[k];
       dad[k+cut]=om[k];
   }
+  // for(int k=0; k<mom.size(); k++) cout << mom[k];
+  // cout << endl;
+  // for(int k=0; k<mom.size(); k++) cout << dad[k];
+  // cout << endl;
 
   roadbook[i].SetPath(mom);
   roadbook[j].SetPath(dad);
@@ -143,6 +169,31 @@ void RoadBook::Crossover(Random& rnd){
   //roadbook[j].CheckPath();
 
 }
+
+void RoadBook::Mutate(Random& rnd){
+
+  MutationsPTR mutations[5]={&Path::Inversion, &Path::Shift, &Path::Swap, &Path::GroupSwap, &Path::GroupShift};
+
+  vector<int> mutations_index = {0,1,2,3,4}; //indici delle mutazioni
+  for(int i=0; i<this->GetRoadBookSize(); i++){
+      random_shuffle(mutations_index.begin(), mutations_index.end());
+      for(int j=4; j>=0; j--){/* ciclo sul numero di mutazioni*/
+          if (rnd.Rannyu()>0.9){
+            (roadbook[i].*mutations[mutations_index[j]])(rnd);
+            //cout << mutations_index[j];
+          }
+          else j=-1;
+      }
+      //cout << endl;
+  }
+
+
+
+  //roadbook[0].PrintPath();
+
+}
+
+
 
 Sehenswurdigkeiten::Sehenswurdigkeiten(vector<double> x_of_cities, vector<double> y_of_cities){
     vector<City> m_sehenswurdigkeiten(x_of_cities.size());

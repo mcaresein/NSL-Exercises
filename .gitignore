@@ -1,5 +1,5 @@
 
 Testi/
-*.ipynb_checkpoints
+*.ipynb_checkpoints/
 *.xyz
-.DS_Store
+*.DS_Store
