@@ -11,6 +11,7 @@ _/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cmath>
 #include "variables.h"
 #include "genetic.h"
 #include "functions.h"
@@ -26,43 +27,23 @@ int main(){
   Sehenswurdigkeiten circle(x_of_cities[1], y_of_cities[1]);
 
   RoadBook rdbk(NUMBER_OF_PATHS,NUMBER_OF_CITIES, rnd);
-  UpdateProbabilities(rdbk, square);
 
-  for(int i=0; i<NUMBER_OF_PATHS; i++){
-      cout << probabilities[i]<< " " ;
-  } cout << endl;
-  for(int i=0; i<NUMBER_OF_PATHS; i++){
-      rdbk.GetRoadBook()[i].PrintPath();
-  }
-
-  // for (int i = 0; i < NUMBER_OF_GENERATIONS; i++){
-  //       cout << i << endl;
-  //       if (rnd.Rannyu()>0.5) rdbk.Crossover(rnd);
-  //
-  //       rdbk.Mutate(rnd);
-  //     UpdateProbabilities(rdbk, square);
-  //     for(int i=0; i<NUMBER_OF_PATHS; i++){
-  //         rdbk.GetRoadBook()[i].PrintPath();
-  //     }
+  // for(int i=0; i<NUMBER_OF_PATHS; i++){
+  //     rdbk.GetRoadBook()[i].PrintPath();
   // }
-  rdbk.Crossover(rnd);
-  //GiveBirth(rdbk, rnd, NUMBER_OF_GENERATIONS, square);
-  cout << "ajghhhj"<< endl;
+  // UpdateProbabilities(rdbk,square);
 
+  Anneal(rdbk, square);
 
-  for(int i=0; i<NUMBER_OF_PATHS; i++){
-    rdbk.GetRoadBook()[i].CheckPath();
-  }
-  for(int i=0; i<NUMBER_OF_PATHS; i++){
-      cout << probabilities[i]<< " ";
-  }
+  // for(int i=0; i<NUMBER_OF_PATHS; i++){
+  // //  rdbk.GetRoadBook()[i].CheckPath();
+  // }
 
+  PrintBest(rdbk,square,"bestpath.txt");
   return 0;
 }
 
 void Input(){
-  /*un po' barocco (come il resto del codice del resto):
-  lo script di python produce le due mappe con le stesse città ed il numero è salvato nella prima riga del primo file prodotto, ovvero squareworld*/
   ifstream citiescoordinates[2];
   citiescoordinates[0].open("squareworld");
   citiescoordinates[1].open("circleworld");
@@ -78,6 +59,9 @@ void Input(){
     citiescoordinates[1]>> x_of_cities[1][i] >> y_of_cities[1][i];
   }
   probabilities.resize(NUMBER_OF_PATHS,0);
+  temperature=T_MAX;
+  beta=1./temperature;
+
 
 }
 
@@ -107,25 +91,71 @@ void InitializeRandomNumberGenerator(){
      // }
      //
      // rnd.SaveSeed();
+  //probabilities.resize(NUMBER_OF_CITIES, 1./NUMBER_OF_CITIES);
 };
 
-void UpdateProbabilities(RoadBook rdbk, Sehenswurdigkeiten cities){
-  double sumprob=0;
-  for(int i=0; i<NUMBER_OF_PATHS; i++){
-      probabilities[i]=cities.GetDistance(rdbk.GetRoadBook()[i]);
-      sumprob+=probabilities[i];
-  }
-  for(int i=0; i<NUMBER_OF_PATHS; i++) probabilities[i]/=sumprob;
-} //è l'operatore di selezione
 
-void GiveBirth(RoadBook& rdbk, Random& rnd, int NUMBER_OF_GENERATIONS, Sehenswurdigkeiten square){
-  for (int i = 0; i < NUMBER_OF_GENERATIONS; i++){
-    if (rnd.Rannyu()>0.5) rdbk.Crossover(rnd);
-    rdbk.Mutate(rnd);
-    UpdateProbabilities(rdbk, square);
-  }
+void Mutate(RoadBook& rdbk, Sehenswurdigkeiten cities){
+    Path trialpath(rdbk.GetRoadBook()[0].GetLength(),rnd);  //giusto per definirlo, poi è sovrascritto nel loop
+    double trial=0.;
+    vector<double> newprobabilities=probabilities;
+
+    for(int i=0; i<rdbk.GetRoadBookSize(); i++){
+        trialpath=rdbk.GetRoadBook()[i];
+        // cout << "----------" << i << "-----------"<< endl;
+        // trialpath.PrintPath();
+
+        int rand=rnd.Rannyu(0,5);
+        if (rand==0) trialpath.Inversion(rnd);
+        if (rand==1) trialpath.Shift(rnd);
+        if (rand==2) trialpath.Swap(rnd);
+        if (rand==3) trialpath.GroupShift(rnd);
+        if (rand==4) trialpath.GroupSwap(rnd);
+
+        //cout<< endl;
+        //trialpath.PrintPath();
+        // roadbook[i].PrintPath();
+
+        //proposta
+        trial=exp(-beta*(cities.GetDistance(trialpath)-cities.GetDistance(rdbk.GetRoadBook()[i])));
+        //cout << trial << endl;
+        if (trial>=rnd.Rannyu(0,1)) {
+            rdbk.SetPath(trialpath, i);
+
+        }
+
+    }
 }
 
+void Anneal(RoadBook& rdbk, Sehenswurdigkeiten citieshape){
+    double T=T_MAX;
+    //for (double t = T_MAX; t>T_MIN ; t-=T_STEPS){
+    while (T>T_MIN ){
+        cout << "T = " << T << endl;
+        beta=1./T;
+        for ( int i = 0; i<MOVES_PER_TEMPERATURE; i++){
+            Mutate(rdbk, citieshape);
+            if (MOVES_PER_TEMPERATURE%iprint==0) citieshape.PrintDistances("paths.txt", rdbk, "A");
+        }
+        T=T-(T-T_MIN)/T_STEP-0.001;
+    }
+}
+
+void PrintBest(RoadBook rdbk, Sehenswurdigkeiten citieshape, string filename){
+  Path bestpath=rdbk.GetRoadBook()[0];
+  bestpath.PrintPath();
+  rdbk.GetRoadBook()[0].PrintPath();
+  int bestindex=0;
+  for (int i = 0; i < rdbk.GetRoadBookSize(); i++) {
+      if ( citieshape.GetDistance(bestpath)>citieshape.GetDistance(rdbk.GetRoadBook()[i]) ){
+          bestindex=i;
+          bestpath=rdbk.GetRoadBook()[i];
+      }
+  }
+  bestpath.PrintPath();
+  cout << citieshape.GetDistance(bestpath) << endl;
+  citieshape.PrintSehenswurdigkeiten(filename, bestpath, "W");
+}
 /****************************************************************
 *****************************************************************
     _/    _/  _/_/_/  _/       Numerical Simulation Laboratory

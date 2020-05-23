@@ -38,6 +38,10 @@ void Path::SetPath(vector<int> newpath){
     if(path.size()!=newpath.size()) {cerr << "I due path non sono lunghi uguali " << endl; exit(-1);}
     for(int i=0; i< path.size(); i++) path[i]=newpath[i];
   }
+void Path::SetPath(Path newpath){
+    if(path.size()!=newpath.GetLength()) {cerr << "I due path non sono lunghi uguali " << endl; exit(-1);}
+    for(int i=0; i< path.size(); i++) path[i]=newpath.GetPath()[i];
+  }
 void Path::SetElem(int element, int index){path[index]=element;}
 void Path::DropLast(){path.erase(path.end()-1);}
 void Path::Append(int elem){path.insert(path.begin(),elem); this->Shift(1);}
@@ -112,6 +116,8 @@ RoadBook::RoadBook(unsigned int npaths, unsigned int ncities, Random& rnd): Path
 
 vector<Path> RoadBook::GetRoadBook(){return roadbook;}
 
+void RoadBook::SetPath(Path p, int index){roadbook[index].SetPath(p);}
+
 int RoadBook::GetRoadBookSize(){return roadbook.size();}
 
 int RoadBook::CheckRoadBook(){       //O INT VISTO CHE CHECKPATH E' INT????
@@ -125,7 +131,7 @@ int RoadBook::CheckRoadBook(){       //O INT VISTO CHE CHECKPATH E' INT????
 void RoadBook::Crossover(Random& rnd){
   int i= rnd.Rannyu(0, this->GetRoadBookSize());
   int j= rnd.Rannyu(0, this->GetRoadBookSize());
-  if (i == j) j= rnd.Rannyu(0, this->GetRoadBookSize());
+  if (i==j) j= rnd.Rannyu(0, this->GetRoadBookSize());
   cout << i << j << endl;
 
   vector<int> mom=roadbook[i].GetPath();  vector <int> om=mom;
@@ -165,36 +171,10 @@ void RoadBook::Crossover(Random& rnd){
 
   roadbook[i].SetPath(mom);
   roadbook[j].SetPath(dad);
-    
-  roadbook[i].PrintPath();
-  for(int i=0; i<mom.size(); i++) cout << mom[i] << endl; cout << endl;
+
   //roadbook[j].CheckPath();
 
 }
-
-void RoadBook::Mutate(Random& rnd){
-
-  MutationsPTR mutations[5]={&Path::Inversion, &Path::Shift, &Path::Swap, &Path::GroupSwap, &Path::GroupShift};
-
-  vector<int> mutations_index = {0,1,2,3,4}; //indici delle mutazioni
-  for(int i=0; i<this->GetRoadBookSize(); i++){
-      random_shuffle(mutations_index.begin(), mutations_index.end());
-      for(int j=4; j>=0; j--){/* ciclo sul numero di mutazioni*/
-          if (rnd.Rannyu()>0.9){
-            (roadbook[i].*mutations[mutations_index[j]])(rnd);
-            //cout << mutations_index[j];
-          }
-          else j=-1;
-      }
-      //cout << endl;
-  }
-
-
-
-  //roadbook[0].PrintPath();
-
-}
-
 
 
 Sehenswurdigkeiten::Sehenswurdigkeiten(vector<double> x_of_cities, vector<double> y_of_cities){
@@ -234,10 +214,16 @@ double Sehenswurdigkeiten::GetDistance2(Path path){
               (sehenswurdigkeiten[j].y-sehenswurdigkeiten[k].y)*(sehenswurdigkeiten[j].y-sehenswurdigkeiten[k].y) ;
         }
      return dist;
+
+
 }
-void  Sehenswurdigkeiten::PrintSehenswurdigkeiten(char* filename, Path path){
+
+void  Sehenswurdigkeiten::PrintSehenswurdigkeiten(string filename, Path path, string mode){
     ofstream file;
-    file.open(filename);
+    if (mode=="A") file.open(filename,ios::app);
+    else if (mode == "W") file.open(filename);
+    else {cerr << "Unable to open file: no mode specified or mispelled" << endl; exit(-1);}
+
     int size=path.GetLength();
 
     for(int i=0; i<size; i++){
@@ -246,6 +232,23 @@ void  Sehenswurdigkeiten::PrintSehenswurdigkeiten(char* filename, Path path){
     }
     file << sehenswurdigkeiten[path.GetPath()[0]].x << "   " << sehenswurdigkeiten[path.GetPath()[0]].y <<endl;
 
+    file.close();
+
+    //rnd.SaveSeed();
+}
+
+void  Sehenswurdigkeiten::PrintDistances(string filename, RoadBook rdbk, string mode){
+    ofstream file;
+    if (mode=="A") file.open(filename,ios::app);
+    else if (mode == "W") file.open(filename);
+    else {cerr << endl << "Unable to open file: no mode specified or mispelled" << endl; exit(-1);}
+
+    int size=rdbk.GetRoadBookSize();
+
+    for(int i=0; i<size; i++){
+        file << this->GetDistance(rdbk.GetRoadBook()[i]) << "   ";
+    }
+    file << endl;
     file.close();
 
     //rnd.SaveSeed();
