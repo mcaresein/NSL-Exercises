@@ -15,6 +15,7 @@ _/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
 #include "variables.h"
 #include "genetic.h"
 #include "functions.h"
+#include "mpi.h"
 
 using namespace std;
 
@@ -26,20 +27,47 @@ int main(){
   Sehenswurdigkeiten square(x_of_cities[0], y_of_cities[0]);
   Sehenswurdigkeiten circle(x_of_cities[1], y_of_cities[1]);
 
-  RoadBook rdbk(NUMBER_OF_PATHS,NUMBER_OF_CITIES, rnd);
+  MPI::Init();
+  int size = MPI::COMM_WORLD.Get_size();
+  int myrank = MPI::COMM_WORLD.Get_rank();
+  if (NUMBER_OF_PATHS%size!=0 && myrank==0){cerr << "path non equamente divisibili tra i processori!";exit(-1);}
 
-  // for(int i=0; i<NUMBER_OF_PATHS; i++){
-  //     rdbk.GetRoadBook()[i].PrintPath();
-  // }
-  // UpdateProbabilities(rdbk,square);
+  RoadBook rdbk(NUMBER_OF_PATHS/size,NUMBER_OF_CITIES, rnd);
+  Anneal(rdbk, square, myrank);
 
-  Anneal(rdbk, square);
+  if (myrank==0){ RoadBook g_rdbk(NUMBER_OF_PATHS, NUMBER_OF_CITIES, rnd); }
+  
+  //manda tutto
+  int mysize=rdbk.GetRoadBookSize()*rdbk.GetRoadBook()[0].GetLength();
+  int mypackedroadbook[mysize];
+  int myindex=0
+  for(int i=0;i<rdbk.GetRoadBookSize(); i++){
+      for( int j=0; j<rdbk.GetRoadBook()[i].GetLength(); j++ ){
+          mypackedroadbook[myindex]=rdbk.GetRoadBook()[i].GetPath()[j];
+          myindex++;
+      }
+  }
 
-  // for(int i=0; i<NUMBER_OF_PATHS; i++){
-  // //  rdbk.GetRoadBook()[i].CheckPath();
-  // }
+  MPI::Gather(&mypackedroadbook, mysize, MPI_INT, &packedroadbook, size, MPI_INT, 0, MPI::COMM_WORLD)
+  ~rdbk();
 
-  PrintBest(rdbk,square,"bestpath.txt");
+  int size=g_rdbk.GetRoadBookSize()*g_rdbk.GetRoadBook()[0].GetLength();
+  Path tempath(rnd, NUMBER_OF_CITIES);
+  int temp;
+  int index;
+
+  if (myrank==0){
+      for(int i=0;i<size; i++){
+          tempath.SetElem(packedroadbook[i],i%NUMBER_OF_CITIES);
+          if ((i+1)%NUMBER_OF_CITIES==0){g_rdbk.SetPath(tempath);}
+      }
+      PrintBest(rdbk,square,"bestpath.txt");
+
+  }
+
+
+
+  MPI::Finalize();
   return 0;
 }
 
@@ -127,18 +155,21 @@ void Mutate(RoadBook& rdbk, Sehenswurdigkeiten cities){
     }
 }
 
-void Anneal(RoadBook& rdbk, Sehenswurdigkeiten citieshape){
+void Anneal(RoadBook& rdbk, Sehenswurdigkeiten citieshape, int myrank){
     double T=T_MAX;
     //for (double t = T_MAX; t>T_MIN ; t-=T_STEPS){
     while (T>T_MIN ){
-        cout << "T = " << T << endl;
+        if (myrank==0) cout << "T = " << T << endl;
         beta=1./T;
         for ( int i = 0; i<MOVES_PER_TEMPERATURE; i++){
             Mutate(rdbk, citieshape);
             if (MOVES_PER_TEMPERATURE%iprint==0) citieshape.PrintDistances("paths.txt", rdbk, "A");
         }
         T=T-(T-T_MIN)/T_STEP-0.001;
+        if (myrank==0) cout << "---------------- Barriera ----------------- " << endl;
+        MPI::Barrier(MPI_COMM_WORLD)
     }
+
 }
 
 void PrintBest(RoadBook rdbk, Sehenswurdigkeiten citieshape, string filename){
