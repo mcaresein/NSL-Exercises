@@ -2,6 +2,7 @@
 #define __genetic_h_
 #include "random.h"
 #include <vector>
+#include <string>
 //#include "variables.h"
 
 
@@ -60,13 +61,15 @@ class Path : private std::vector<int>{
 class RoadBook: public Path {
     public:
         RoadBook(unsigned int, unsigned int, Random&);
+	//~RoadBook();
+
         vector<Path> GetRoadBook();
         void SetPath(Path, int );
         int CheckRoadBook();//VOID O INT VISTO CHE CHECKPATH E' INT????
         int GetRoadBookSize();
         void Crossover(Random&);
       //  void Mutate(Random&, Sehenswurdigkeiten, vector<double>&, double);
-
+	
     private:
         std::vector<Path> roadbook;
 };

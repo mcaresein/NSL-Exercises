@@ -28,19 +28,20 @@ int main(){
   Sehenswurdigkeiten circle(x_of_cities[1], y_of_cities[1]);
 
   MPI::Init();
-  int size = MPI::COMM_WORLD.Get_size();
+  int nprocess = MPI::COMM_WORLD.Get_size();
   int myrank = MPI::COMM_WORLD.Get_rank();
-  if (NUMBER_OF_PATHS%size!=0 && myrank==0){cerr << "path non equamente divisibili tra i processori!";exit(-1);}
+  if (NUMBER_OF_PATHS%nprocess!=0 && myrank==0){cerr << "path non equamente divisibili tra i processori!";exit(-1);}
 
-  RoadBook rdbk(NUMBER_OF_PATHS/size,NUMBER_OF_CITIES, rnd);
+  RoadBook rdbk(NUMBER_OF_PATHS/nprocess,NUMBER_OF_CITIES, rnd);
   Anneal(rdbk, square, myrank);
 
-  if (myrank==0){ RoadBook g_rdbk(NUMBER_OF_PATHS, NUMBER_OF_CITIES, rnd); }
+  //if (myrank==0) 	  
+  RoadBook g_rdbk(NUMBER_OF_PATHS, NUMBER_OF_CITIES, rnd); 
   
   //manda tutto
   int mysize=rdbk.GetRoadBookSize()*rdbk.GetRoadBook()[0].GetLength();
   int mypackedroadbook[mysize];
-  int myindex=0
+  int myindex=0;
   for(int i=0;i<rdbk.GetRoadBookSize(); i++){
       for( int j=0; j<rdbk.GetRoadBook()[i].GetLength(); j++ ){
           mypackedroadbook[myindex]=rdbk.GetRoadBook()[i].GetPath()[j];
@@ -48,18 +49,17 @@ int main(){
       }
   }
 
-  MPI::Gather(&mypackedroadbook, mysize, MPI_INT, &packedroadbook, size, MPI_INT, 0, MPI::COMM_WORLD)
-  ~rdbk();
-
   int size=g_rdbk.GetRoadBookSize()*g_rdbk.GetRoadBook()[0].GetLength();
-  Path tempath(rnd, NUMBER_OF_CITIES);
-  int temp;
-  int index;
+  int packedroadbook[size];
+  MPI_Gather(&mypackedroadbook, mysize, MPI_INT, &packedroadbook, size, MPI_INT, 0, MPI::COMM_WORLD);
+  //  ~rdbk(); s'ha da chiamare??
+
 
   if (myrank==0){
+      Path tempath(NUMBER_OF_CITIES, rnd);
       for(int i=0;i<size; i++){
           tempath.SetElem(packedroadbook[i],i%NUMBER_OF_CITIES);
-          if ((i+1)%NUMBER_OF_CITIES==0){g_rdbk.SetPath(tempath);}
+          if ((i+1)%NUMBER_OF_CITIES==0){g_rdbk.SetPath(tempath, ( (i+1)/NUMBER_OF_CITIES -1 ) );}
       }
       PrintBest(rdbk,square,"bestpath.txt");
 
@@ -166,8 +166,8 @@ void Anneal(RoadBook& rdbk, Sehenswurdigkeiten citieshape, int myrank){
             if (MOVES_PER_TEMPERATURE%iprint==0) citieshape.PrintDistances("paths.txt", rdbk, "A");
         }
         T=T-(T-T_MIN)/T_STEP-0.001;
-        if (myrank==0) cout << "---------------- Barriera ----------------- " << endl;
-        MPI::Barrier(MPI_COMM_WORLD)
+        //if (myrank==0) cout << "---------------- Barriera ----------------- " << endl;
+        //MPI_Barrier(MPI_COMM_WORLD);
     }
 
 }
@@ -183,7 +183,7 @@ void PrintBest(RoadBook rdbk, Sehenswurdigkeiten citieshape, string filename){
           bestpath=rdbk.GetRoadBook()[i];
       }
   }
-  bestpath.PrintPath();
+  //bestpath.PrintPath();
   cout << citieshape.GetDistance(bestpath) << endl;
   citieshape.PrintSehenswurdigkeiten(filename, bestpath, "W");
 }
