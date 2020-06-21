@@ -1,5 +1,9 @@
 
 Testi/
+LSN_Exercises*.ipynb
 *.ipynb_checkpoints/
 *.xyz
 *.DS_Store
+*.o 
+main.exe 
+seed.out
