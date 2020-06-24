@@ -1,7 +1,7 @@
 
 Testi/
 LSN_Exercises*.ipynb
-*.ipynb_checkpoints/*
+*checkpoint*
 *.xyz
 *.DS_Store
 *.o 
