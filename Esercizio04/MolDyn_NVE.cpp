@@ -34,14 +34,14 @@ int main(){
         ConfXYZ(iconf);                       //Write conf in XYZ format //Commented to avoid "filesystem full"!
         if(iconf%blocks_length == 0){
             int block_index=((iconf-1)/blocks_length);
-            cout << " Chiudo e medio blocco " << block_index << " di " << blocks_number << endl;
+            cout << " Chiudo e medio blocco " << block_index+1 << " di " << blocks_number << endl;
             BlockAverages(block_index, sum_prog, sum2_prog, error_prog, sum_props);
         }
         iconf += 1;
      }
   }
   ConfFinal();         //Write final configuration to restar
-  
+
   return 0;
 }
 
@@ -80,9 +80,6 @@ void Input(void){ //Prepare all stuff for the simulation
   ReadInput >> blocks_number;
   ReadInput >> nconf;
 
-
-  cout << box << endl;
-  //cout << restart;
   cout << "The program integrates Newton equations with the Verlet method " << endl;
   cout << "Time step = " << delta << endl;
   cout << "Number of steps = " << nstep << endl;
@@ -97,9 +94,10 @@ void Input(void){ //Prepare all stuff for the simulation
   ik = 1; //Kinetic energy
   it = 2; //Temperature
   ie = 3; //Total Energy
+  ip = 4; //Pressure
   // n_props = 4; //Number of observables: SET IN THE HEADER
 
-  conf_length=nstep/nconf;         // cioè numero di integrazioni tra una misura e l'altra
+  conf_length=nstep/nconf;             // cioè numero di integrazioni tra una misura e l'altra
   blocks_length=nconf/(blocks_number); //lunghezza del blocco IN UNITA' DI CONFIGURAZIONI
 
   cout << "block's length = " << blocks_length << endl;
@@ -191,6 +189,7 @@ if (restart){
     }
     return;
 }
+
 void Move(void){ //Move particles with Verlet algorithm
   double xnew, ynew, znew, fx[m_part], fy[m_part], fz[m_part];
 
@@ -244,62 +243,71 @@ double Force(int ip, int idir){ //Compute forces as -Grad_ip V(r)
 }
 
 void Measure(vector<double> &sum_props){ //Properties measurement
-  int bin;
-  double v, t, vij;
-  double dx, dy, dz, dr;
-  ofstream Epot, Ekin, Etot, Temp;
+   int bin;
+   double v, w, t, vij, wij;
+   double dx, dy, dz, dr;
+   ofstream Epot, Ekin, Etot, Temp, Pres;
 
-  Epot.open("output_epot.dat",ios::app);
-  Ekin.open("output_ekin.dat",ios::app);
-  Temp.open("output_temp.dat",ios::app);
-  Etot.open("output_etot.dat",ios::app);
+   Epot.open("output_epot.dat",ios::app);
+   Ekin.open("output_ekin.dat",ios::app);
+   Temp.open("output_temp.dat",ios::app);
+   Etot.open("output_etot.dat",ios::app);
+   Pres.open("output_pres.dat",ios::app);
 
-  v = 0.0; //reset observables
-  t = 0.0;
+   v = 0.0; //reset observables
+   w = 0.0;
+   t = 0.0;
 
-//cycle over pairs of particles
-  for (int i=0; i<npart-1; ++i){
-    for (int j=i+1; j<npart; ++j){
+   //cycle over pairs of particles
+   for (int i=0; i<npart-1; ++i){
+       for (int j=i+1; j<npart; ++j){
 
-     dx = Pbc( x[i] - x[j] );
-     dy = Pbc( y[i] - y[j] );
-     dz = Pbc( z[i] - z[j] );
+           dx = Pbc( x[i] - x[j] );
+           dy = Pbc( y[i] - y[j] );
+           dz = Pbc( z[i] - z[j] );
 
-     dr = dx*dx + dy*dy + dz*dz;
-     dr = sqrt(dr);
+           dr = dx*dx + dy*dy + dz*dz;
+           dr = sqrt(dr);
 
-     if(dr < rcut){
-       vij = 4.0/pow(dr,12) - 4.0/pow(dr,6);
+           if(dr < rcut){
+                vij = 4.0/pow(dr,12) - 4.0/pow(dr,6);
+                wij = 1.0/pow(dr,12) - 0.5/pow(dr,6);
 
-//Potential energy
-       v += vij;
-     }
-    }
-  }
+            //Potential energy
+                v += vij;
+                w += wij;
+            }
+       }
+   }
 
-//Kinetic energy
-  for (int i=0; i<npart; ++i) t += 0.5 * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
+   //Kinetic energy
+   for (int i=0; i<npart; ++i) t += 0.5 * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
 
-    stima_pot = v/(double)npart; //Potential energy per particle
-    stima_kin = t/(double)npart; //Kinetic energy per particle
-    stima_temp = (2.0 / 3.0) * t/(double)npart; //Temperature
-    stima_etot = (t+v)/(double)npart; //Total energy per particle
+   //estimations
+    stima_pot   = v/(double)npart; //Potential energy per particle
+    stima_kin   = t/(double)npart; //Kinetic energy per particle
+    stima_temp  = (2.0 / 3.0) * t/(double)npart; //Temperature
+    stima_etot  = (t+v)/(double)npart; //Total energy per particle
+    stima_pres = rho*stima_temp + 48.0*wij/3.0/vol;
 
     sum_props[iv] += stima_pot;
     sum_props[ik] += stima_kin;
     sum_props[it] += stima_temp;
     sum_props[ie] += stima_etot;
+    sum_props[ip] += stima_pres;
 
 
     Epot << stima_pot  << endl;
     Ekin << stima_kin  << endl;
     Temp << stima_temp << endl;
     Etot << stima_etot << endl;
+    Pres << stima_pres << endl;
 
     Epot.close();
     Ekin.close();
     Temp.close();
     Etot.close();
+    Pres.close();
 
     return;
 }
@@ -347,7 +355,7 @@ void BlockAverages(int block_index,  matrix &sum_prog, matrix &sum2_prog, matrix
     vector<double> ave(n_props);
     vector<double> ave2(n_props);
 
-    ofstream ave_Epot, ave_Ekin, ave_Temp, ave_Etot;
+    ofstream ave_Epot, ave_Ekin, ave_Temp, ave_Etot, ave_pres;
     for (int iprops=0; iprops<n_props; iprops++){
         cout << sum_props[iprops]/blocks_length<< endl;
          ave[iprops] = sum_props[iprops]/blocks_length;
@@ -366,16 +374,20 @@ void BlockAverages(int block_index,  matrix &sum_prog, matrix &sum2_prog, matrix
      ave_Ekin.open("ave_ekin.dat",ios::app);
      ave_Temp.open("ave_temp.dat",ios::app);
      ave_Etot.open("ave_etot.dat",ios::app);
+     ave_pres.open("ave_pres.dat",ios::app);
+
 
      ave_Epot << (block_index+1)*blocks_length <<  " " << sum_prog[block_index][iv] << " " << error_prog[block_index][iv] << endl;
      ave_Ekin << (block_index+1)*blocks_length <<  " " << sum_prog[block_index][ik] << " " << error_prog[block_index][ik] << endl;
      ave_Temp << (block_index+1)*blocks_length <<  " " << sum_prog[block_index][it] << " " << error_prog[block_index][it] << endl;
      ave_Etot << (block_index+1)*blocks_length <<  " " << sum_prog[block_index][ie] << " " << error_prog[block_index][ie] << endl;
+     ave_pres << (block_index+1)*blocks_length <<  " " << sum_prog[block_index][ip] << " " << error_prog[block_index][ip] << endl;
 
      ave_Epot.close();
      ave_Ekin.close();
      ave_Temp.close();
      ave_Etot.close();
+     ave_pres.close();
 
 }
 

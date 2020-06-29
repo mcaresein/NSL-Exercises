@@ -13,10 +13,10 @@ using namespace std;
 typedef vector< vector<double> > matrix;
 
 //parameters, observables
-const int m_props=4;
-int n_props=4;
-int iv,ik,it,ie;
-double stima_pot, stima_kin, stima_etot, stima_temp;
+const int m_props=5;
+int n_props=5;
+int iv,ik,it,ie, ip;
+double stima_pot, stima_kin, stima_etot, stima_temp, stima_pres;
 
 //configuration
 const int m_part=108;
@@ -37,12 +37,7 @@ bool restart;
 double acc,att;
 int blocks_number;
 int blocks_length;
-//vector< vector<double> > sum_prog_props;
-//vector< vector<double> > sum2_prog_props;
-//vector< vector<double> > error_prog_props;
-//vector< vector<double> > ave_props;
-//vector< vector<double> > ave2_props;
-//vector<double>  sum_props;
+
 
 //functions
 void Input(void);

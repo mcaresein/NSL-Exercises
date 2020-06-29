@@ -1,4 +1,4 @@
-#!/bin/fish
+#!/bin/bash
 rm -rf *epot*
 rm -rf *ekin*
 rm -rf *etot*

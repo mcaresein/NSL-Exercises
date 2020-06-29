@@ -2,8 +2,10 @@
 Testi/
 LSN_Exercises*.ipynb
 *checkpoint*
-*.xyz
+config*.xyz
 *.DS_Store
 *.o 
 main.exe 
 seed.out
+frames
+frames
