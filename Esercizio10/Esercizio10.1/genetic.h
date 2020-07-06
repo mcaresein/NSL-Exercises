@@ -21,7 +21,7 @@ std::vector<int> Swap(int*, int, int);
 void RandomPermute(int*, int);
 
 //oggetti da simulare
-class Path : private std::vector<int>{
+class Path : public std::vector<int>{
     public:
         Path(int, Random&);     //costruisce una sentiero di città
 
@@ -64,8 +64,6 @@ class RoadBook: public Path {
         void SetPath(Path, int );
         int CheckRoadBook();//VOID O INT VISTO CHE CHECKPATH E' INT????
         int GetRoadBookSize();
-        void Crossover(Random&);
-      //  void Mutate(Random&, Sehenswurdigkeiten, vector<double>&, double);
 
     private:
         std::vector<Path> roadbook;

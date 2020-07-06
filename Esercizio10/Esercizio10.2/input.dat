@@ -1,0 +1,11 @@
+10
+100
+0.01
+1.5
+10
+
+   ReadInput >> NUMBER_OF_PATHS;
+   ReadInput >> MOVES_PER_TEMPERATURE;
+   ReadInput >> T_MIN
+   ReadInput >> T_MAX
+   ReadInput >> T_STEP

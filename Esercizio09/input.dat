@@ -1,0 +1,7 @@
+150
+150
+0
+
+   ReadInput >> NUMBER_OF_GENERATIONS
+   ReadInput >> NUMBER_OF_PATHS !!PARI!! 
+   ReadInput >> VERBOSE

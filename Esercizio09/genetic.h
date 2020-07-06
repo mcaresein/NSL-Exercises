@@ -1,7 +1,7 @@
 #ifndef __genetic_h_
 #define __genetic_h_
 #include "random.h"
-#include<vector>
+#include <vector>
 
 
 struct City{
@@ -20,18 +20,16 @@ std::vector<int> Swap(int*, int, int);
 void RandomPermute(int*, int);
 
 //oggetti da simulare
-class Path : private std::vector<int>{
+class Path : public std::vector<int>{
     public:
+        Path(){};
+        Path(int);
         Path(int, Random&);     //costruisce una sentiero di città
 
         std::vector<int> GetPath();
         void SetPath(vector<int>);
         void SetElem(int, int);
-        void DropLast();
-        void Append(int);
-        void Erase(int);
-        iterator IsIn(int, int);
-        int CheckPath();
+        int CheckPath(bool); //true for silent check (!verbose)
         void PrintPath();
         int GetLength();
 
@@ -55,16 +53,23 @@ class Path : private std::vector<int>{
 };
 
 class RoadBook: public Path {
-    public:
-        RoadBook(unsigned int, unsigned int, Random&);
-        vector<Path> GetRoadBook();
-        int CheckRoadBook();//VOID O INT VISTO CHE CHECKPATH E' INT????
-        int GetRoadBookSize();
-        void Crossover(Random&);
-        void Mutate(Random&);
+   public:
+      RoadBook(unsigned int, unsigned int);
+      RoadBook(unsigned int, unsigned int, Random&);
+      RoadBook(const RoadBook&);
 
-    private:
-        std::vector<Path> roadbook;
+      RoadBook& operator=(const RoadBook&);
+
+      vector<Path>  GetRoadBook() const;
+      void SetPath(Path, int);
+      int CheckRoadBook(bool );
+      int  GetRoadBookSize() const;
+      void PrintRoadbook();
+      void Crossover(Random&, int, int,bool);
+      void Mutate(Random&, int, int,bool);
+
+   private:
+      std::vector<Path> roadbook;
 };
 
 class Sehenswurdigkeiten{
@@ -74,7 +79,7 @@ class Sehenswurdigkeiten{
       int GetLength();
       double GetDistance(Path);
       double GetDistance2(Path);
-      void PrintSehenswurdigkeiten(char*, Path);
+      void PrintSehenswurdigkeiten(std::string, Path, std::string mode);
     private:
       std::vector<City> sehenswurdigkeiten;
 };

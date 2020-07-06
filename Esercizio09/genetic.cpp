@@ -23,7 +23,13 @@ vector<int> Swap(vector<int> p, int a, int b){
     return p;
 }
 
-Path::Path(int ncities, Random& rnd) {
+
+
+//================================== PATH =====================================//
+
+
+Path::Path(int ncities){ path.resize(ncities,0);}
+Path::Path(int ncities, Random& rnd){
     path = vector<int>(ncities,0);
     for(int i=0; i<ncities; i++) path[i] = i;
     for(int i=path.size()-1;i>0;i--){
@@ -35,26 +41,23 @@ Path::Path(int ncities, Random& rnd) {
 void Path::PrintPath(){ for (int i=0; i<path.size(); i++) cout << path[i] << " "; cout << endl;};
 vector<int> Path::GetPath(){return path;}
 void Path::SetPath(vector<int> newpath){
-    if(path.size()!=newpath.size()) {cerr << "I due path non sono lunghi uguali " << endl; exit(-1);}
-    for(int i=0; i< path.size(); i++) path[i]=newpath[i];
-  }
-void Path::SetElem(int element, int index){path[index]=element;}
-void Path::DropLast(){path.erase(path.end()-1);}
-void Path::Append(int elem){path.insert(path.begin(),elem); this->Shift(1);}
+   if (newpath.size()!=path.size()){ cerr << "ERROR: Path::SetPath \nI due path non sono lunghi uguali"; exit(-1);}
+   for (int i = 0; i < path.size(); i++) {
+      path[i]=newpath[i];
+   }
+}
 int Path::GetLength(){return path.size();}
-void Path::Erase(int i){path.erase(path.begin()+i);}
-Path::iterator Path::IsIn(int elem, int index){return find(path.begin()+index ,path.end(),elem); }
 
-
-int Path::CheckPath(){
+int Path::CheckPath(bool silent){
    vector<int> temp=path;
    int path_size=path.size();
    sort(temp.begin(), temp.end());
-   cout << "Check... ";
+   if(!silent) cout << "Check... ";
    int i=0;
    while(i<path_size && temp[i]==i){i++;}
-   if(i==path_size){cout << " OK" << endl; return 0;}
-   else {cerr << "Il vettore non rappresenta un sentiero!" << endl; exit(-1);}
+   if(!silent) cout << " OK" << endl;
+   if(i==path_size){return 0;}
+   else {cerr << "ERROR: Path::CheckPath \nIl vettore non rappresenta un sentiero!" << endl; exit(-1);}
 }
 
 //mutazioni
@@ -70,18 +73,17 @@ void Path::Shift(unsigned int nshifts){     // cicli antiorari : (012)->(120)
     }
 }
 
-
 void Path::Swap(Random& rnd){this->Swap(rnd.Rannyu(0, this->GetLength()), rnd.Rannyu(0, this->GetLength()));}
 
 void Path::Shift(Random& rnd){this->Shift(rnd.Rannyu(0, this->GetLength()));}
 
 void Path::GroupShift(Random& rnd){ //warning floating point exception
-  int begin=rnd.Rannyu(0, path.size()/2.);
-  int end=rnd.Rannyu(begin, path.size());
-  int index=rnd.Rannyu(begin, end);
-  //cout << begin << " " << index << " " << end << endl;
+   int begin=rnd.Rannyu(0, path.size()/2.);
+   int end=rnd.Rannyu(begin, path.size());
+   int index=rnd.Rannyu(begin, end);
+   //cout << begin << " " << index << " " << end << endl;
 
-  rotate(path.begin()+begin, path.begin() + index, path.begin() + end);
+   rotate(path.begin()+begin, path.begin() + index, path.begin() + end);
 }
 
 void Path::GroupSwap(Random& rnd){
@@ -92,110 +94,158 @@ void Path::GroupSwap(Random& rnd){
 }
 
 void Path::Inversion(Random& rnd){
-  unsigned int end=rnd.Rannyu(0,path.size());
-  unsigned int start=rnd.Rannyu(0,end);
-  //cout << start << " " << end <<  endl;
-  for(int i=0; i<(end-start+1)/2; i++){ this->Swap(start+i, end-i);
-  }
+   unsigned int end=rnd.Rannyu(0,path.size());
+   unsigned int start=rnd.Rannyu(0,end);
+   //cout << start << " " << end <<  endl;
+   for(int i=0; i<(end-start+1)/2; i++){ this->Swap(start+i, end-i);
+   }
 }
 
 
+//=================================== ROADBOOK ===================================//
 
-
+RoadBook::RoadBook(unsigned int npaths, unsigned int ncities): Path(ncities){
+    for(int i=0; i<npaths; i++){
+        roadbook.push_back(Path(ncities));
+    }
+}
 
 RoadBook::RoadBook(unsigned int npaths, unsigned int ncities, Random& rnd): Path(ncities, rnd){
     for(int i=0; i<npaths; i++){
         roadbook.push_back(Path(ncities, rnd));
     }
-    //roadbook=newrdbk;
 }
 
-vector<Path> RoadBook::GetRoadBook(){return roadbook;}
+RoadBook::RoadBook(const RoadBook& rdbk){
+    for(int i=0; i<rdbk.GetRoadBookSize(); i++){
+        roadbook.push_back(rdbk.GetRoadBook()[i]);
+    }
+}
 
-int RoadBook::GetRoadBookSize(){return roadbook.size();}
 
-int RoadBook::CheckRoadBook(){       //O INT VISTO CHE CHECKPATH E' INT????
+RoadBook& RoadBook::operator=(const RoadBook& rdbk){
+   for (size_t i = 0; i < rdbk.GetRoadBookSize(); i++) {
+      this->SetPath(rdbk.GetRoadBook()[i],i);
+   }
+   return *this;
+}
+
+vector<Path> RoadBook::GetRoadBook() const {return roadbook;}
+
+int RoadBook::GetRoadBookSize() const {return roadbook.size();}
+
+void RoadBook::SetPath(Path path, int index){
+   if(path.GetLength()!=this->GetRoadBook()[index].GetLength()) {cerr << "ERROR: Roadbook::SetPath: I due path non sono lunghi uguali: lunghezza del sostituito: " <<  roadbook[index].GetLength() << " e lunghezza del sostituto " << path.GetLength() << endl; exit(-1);}
+   roadbook[index]=path;
+}
+
+int RoadBook::CheckRoadBook(bool silent){
     for(int i=0; i<this->GetRoadBookSize(); i++) {
-        cout << "Checking roadbook's path " << i << "... ";
-        roadbook[i].CheckPath();
+        if(!silent) cout << "Checking roadbook's path " << i << "... ";
+        roadbook[i].CheckPath(silent);
     }
     return 0;
 }
 
-void RoadBook::Crossover(Random& rnd){
-  int i= rnd.Rannyu(0, this->GetRoadBookSize());
-  int j= rnd.Rannyu(0, this->GetRoadBookSize());
-  if (i == j) j= rnd.Rannyu(0, this->GetRoadBookSize());
-  cout << i << j << endl;
+void RoadBook::PrintRoadbook(){
+   for(int i=0; i<this->GetRoadBookSize(); i++){
+      this->GetRoadBook()[i].PrintPath();
+   }
+}
 
-  vector<int> mom=roadbook[i].GetPath();  vector <int> om=mom;
-  vector<int> dad=roadbook[j].GetPath();  vector <int> ad=dad;
-  cout << "ahj" << roadbook[i].GetLength()<< endl;
-  int cut=rnd.Rannyu(0, roadbook[i].GetLength());
-  //cout << cut << endl;
+void RoadBook::Crossover(Random& rnd, int min_index, int min2_index,bool v){ //(mom, dad) -> (mad, dom)
+   if(v) cout << min_index << min2_index << endl;
+   std::cout << "Crossover" << '\n';
+   vector<int> mom=roadbook[min_index].GetPath();  vector <int> om=mom;
+   vector<int> dad=roadbook[min2_index].GetPath();  vector <int> ad=dad;
 
-  //roadbook[4].PrintPath();
+   int cut=rnd.Rannyu(0, roadbook[min_index].GetLength());
+   if(v) cout << "cut = " << cut<< endl;
 
+   if(v){
+      cout << "mom = ";
+      for(int k=0; k<mom.size(); k++){
+         cout << mom[k] << " ";
+      }cout << endl;
 
-  // for(int k=0; k<mom.size(); k++) cout << mom[k];
-  // cout << endl;
-  // for(int k=0; k<mom.size(); k++) cout << dad[k];
-  // cout << endl;
+      cout << "dad = ";
+      for(int k=0; k<dad.size(); k++){
+         cout << dad[k] << " ";
+      }cout << endl;
+   }
 
-  for(int k=0; k<om.size();  k++){
+   for(int k=0; k<ad.size();  k++){
       if (find(mom.begin()+cut,mom.end(),ad[k]) == mom.end()){
          ad.erase(ad.begin()+k); k--;
       }
-  }
+   }
 
-  for(int k=0; k<ad.size();  k++){
+   for(int k=0; k<om.size();  k++){
       if (find(dad.begin()+cut,dad.end(),om[k]) == dad.end()){
         om.erase(om.begin()+k); k--;
       }
-  }
+   }
+   if(v){
+      cout << " ad = ";
+      for(int k=0; k<ad.size(); k++){
+         cout << ad[k] << " ";
+      }cout << endl;
 
-  for(int k=0; k<mom.size(); k++){
-      mom[k+cut]=ad[k];
-      dad[k+cut]=om[k];
-  }
-  // for(int k=0; k<mom.size(); k++) cout << mom[k];
-  // cout << endl;
-  // for(int k=0; k<mom.size(); k++) cout << dad[k];
-  // cout << endl;
+      cout << " om = ";
+      for(int k=0; k<om.size(); k++){
+         cout << om[k] << " ";
+      }cout << endl;
+   }
 
-  roadbook[i].SetPath(mom);
-  roadbook[j].SetPath(dad);
-    
-  roadbook[i].PrintPath();
-  for(int i=0; i<mom.size(); i++) cout << mom[i] << endl; cout << endl;
-  //roadbook[j].CheckPath();
+   for(int k=0; k<om.size(); k++){
+      mom[k+cut]=ad[k];  //which is mad, here for convenience
+      dad[k+cut]=om[k];  //which is dom, here for convenience
+   }
 
+   roadbook[min_index].SetPath(mom);
+   roadbook[min2_index].SetPath(dad);
+
+   if(v){
+      cout << "mad = ";
+      for(int k=0; k<mom.size(); k++){
+        cout << mom[k] << " ";
+      }cout << endl;
+      cout << "dom = ";
+      roadbook[min2_index].PrintPath();
+      std::cout << '\n';
+   }
 }
 
-void RoadBook::Mutate(Random& rnd){
+void RoadBook::Mutate(Random& rnd, int min_index, int min2_index, bool v){
 
-  MutationsPTR mutations[5]={&Path::Inversion, &Path::Shift, &Path::Swap, &Path::GroupSwap, &Path::GroupShift};
+   MutationsPTR mutations[5]={&Path::Inversion, &Path::Shift, &Path::Swap, &Path::GroupSwap, &Path::GroupShift};
+   vector<int> mutations_index = {0,1,2,3,4}; //indici delle mutazioni
 
-  vector<int> mutations_index = {0,1,2,3,4}; //indici delle mutazioni
-  for(int i=0; i<this->GetRoadBookSize(); i++){
-      random_shuffle(mutations_index.begin(), mutations_index.end());
-      for(int j=4; j>=0; j--){/* ciclo sul numero di mutazioni*/
-          if (rnd.Rannyu()>0.9){
-            (roadbook[i].*mutations[mutations_index[j]])(rnd);
-            //cout << mutations_index[j];
-          }
-          else j=-1;
+   //mutate the first
+   random_shuffle(mutations_index.begin(), mutations_index.end());
+   cout << "mutazione del primo: ";
+   for(int j=4; j>=0; j--){/* ciclo sul numero di mutazioni*/
+      if (rnd.Rannyu()>0.9){
+         (roadbook[min_index].*mutations[mutations_index[j]])(rnd);
+         cout << mutations_index[j];
       }
-      //cout << endl;
-  }
-
-
-
-  //roadbook[0].PrintPath();
-
+      else j=-1;
+   }
+   cout << endl;
+   //mutate the second
+   random_shuffle(mutations_index.begin(), mutations_index.end());
+   cout << "mutazione del secondo: ";
+   for(int j=4; j>=0; j--){/* ciclo sul numero di mutazioni*/
+      if (rnd.Rannyu()>0.9){
+         (roadbook[min2_index].*mutations[mutations_index[j]])(rnd);
+         cout << mutations_index[j];
+      }
+      else j=-1;
+   }
+   cout << endl;
 }
 
-
+//============================= SEHENSWURDIGKEITEN =============================//
 
 Sehenswurdigkeiten::Sehenswurdigkeiten(vector<double> x_of_cities, vector<double> y_of_cities){
     vector<City> m_sehenswurdigkeiten(x_of_cities.size());
@@ -235,9 +285,12 @@ double Sehenswurdigkeiten::GetDistance2(Path path){
         }
      return dist;
 }
-void  Sehenswurdigkeiten::PrintSehenswurdigkeiten(char* filename, Path path){
+void  Sehenswurdigkeiten::PrintSehenswurdigkeiten(string filename, Path path, string mode){
     ofstream file;
-    file.open(filename);
+    if (mode=="A") file.open(filename,ios::app);
+    else if (mode == "W") file.open(filename);
+    else {cerr << "ERROR: Sehenswurdigkeiten::PrintSehenswurdigkeiten \nUnable to open file: no mode specified or mispelled" << endl; exit(-1);}
+
     int size=path.GetLength();
 
     for(int i=0; i<size; i++){

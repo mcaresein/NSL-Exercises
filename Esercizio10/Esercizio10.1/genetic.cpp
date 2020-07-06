@@ -128,55 +128,6 @@ int RoadBook::CheckRoadBook(){       //O INT VISTO CHE CHECKPATH E' INT????
     return 0;
 }
 
-void RoadBook::Crossover(Random& rnd){
-  int i= rnd.Rannyu(0, this->GetRoadBookSize());
-  int j= rnd.Rannyu(0, this->GetRoadBookSize());
-  if (i==j) j= rnd.Rannyu(0, this->GetRoadBookSize());
-  cout << i << j << endl;
-
-  vector<int> mom=roadbook[i].GetPath();  vector <int> om=mom;
-  vector<int> dad=roadbook[j].GetPath();  vector <int> ad=dad;
-  cout << "ahj" << roadbook[i].GetLength()<< endl;
-  int cut=rnd.Rannyu(0, roadbook[i].GetLength());
-  //cout << cut << endl;
-
-  //roadbook[4].PrintPath();
-
-
-  // for(int k=0; k<mom.size(); k++) cout << mom[k];
-  // cout << endl;
-  // for(int k=0; k<mom.size(); k++) cout << dad[k];
-  // cout << endl;
-
-  for(int k=0; k<om.size();  k++){
-      if (find(mom.begin()+cut,mom.end(),ad[k]) == mom.end()){
-         ad.erase(ad.begin()+k); k--;
-      }
-  }
-
-  for(int k=0; k<ad.size();  k++){
-      if (find(dad.begin()+cut,dad.end(),om[k]) == dad.end()){
-        om.erase(om.begin()+k); k--;
-      }
-  }
-
-  for(int k=0; k<mom.size(); k++){
-      mom[k+cut]=ad[k];
-      dad[k+cut]=om[k];
-  }
-  // for(int k=0; k<mom.size(); k++) cout << mom[k];
-  // cout << endl;
-  // for(int k=0; k<mom.size(); k++) cout << dad[k];
-  // cout << endl;
-
-  roadbook[i].SetPath(mom);
-  roadbook[j].SetPath(dad);
-
-  //roadbook[j].CheckPath();
-
-}
-
-
 Sehenswurdigkeiten::Sehenswurdigkeiten(vector<double> x_of_cities, vector<double> y_of_cities){
     vector<City> m_sehenswurdigkeiten(x_of_cities.size());
     for(int i=0; i<x_of_cities.size(); i++){

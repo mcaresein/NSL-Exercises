@@ -1,5 +1,5 @@
 void InitializeRandomNumberGenerator();
-void Input();
+void Input(int);
 void Mutate(RoadBook&, Sehenswurdigkeiten);
 void Anneal(RoadBook&, Sehenswurdigkeiten, int);
-void PrintBest(RoadBook, Sehenswurdigkeiten, std::string );
+void PrintBest(RoadBook&, Sehenswurdigkeiten, std::string );

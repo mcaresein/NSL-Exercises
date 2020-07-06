@@ -22,7 +22,7 @@ std::vector<int> Swap(int*, int, int);
 void RandomPermute(int*, int);
 
 //oggetti da simulare
-class Path : private std::vector<int>{
+class Path : public std::vector<int>{
     public:
         Path(int, Random&);     //costruisce una sentiero di città
 
