@@ -70,7 +70,7 @@ int main (int argc, char *argv[]){
       walker_1s.PrintRate();
       walker_1s_stat.UpdateAveAv2(sum, nb);
    }
-   //walker_1s_stat.SaveBlockAverageVariance("Gauss2p.txt");
+   walker_1s_stat.SaveBlockAverageVariance("Gauss2p.txt");
 
 
    return 0;
