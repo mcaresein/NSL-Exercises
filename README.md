@@ -1,5 +1,7 @@
 # NSL-Exercises
 This repository deliveries exercises for the Numerical Simulation Laboratory exam, a.a 2019/2020, held by Prof. D. Galli. 
+
+There is a notebook NotebokNN for each folder ExerciseNN, and occasionally subfolders that refer to the specific sub-exercise.
 - [Exercise01](https://github.com/mcaresein/NSL-Exercises/tree/master/Esercizio01)
 - [Exercise02](https://github.com/mcaresein/NSL-Exercises/tree/master/Esercizio02) 
 - [Exercise03](https://github.com/mcaresein/NSL-Exercises/tree/master/Esercizio03) 
