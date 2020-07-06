@@ -7,5 +7,5 @@ The code is meant to be run by the script VariateParameters.sh, which save in th
 
 **Warning**: it rapidly eat your disk space by saving the optimal wavefunction found for each of the pair of the parameters. 
 
-QMC_1D contains data from a PIGS/PIMC code for comparison.
-vmc_data contains data shown in the notebook
+QMC_1D contains data from a PIGS/PIMC code for comparison.  
+vmc_data contains the data shown in the notebook
