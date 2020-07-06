@@ -1,4 +1,4 @@
-This folder contains a code for simulation of the Ising model.
+This folder contains a code for simulation of the Ising model using Metropolis sampling or gibbs sampling.
 There are 2 helper scripts
 1) run.sh: run the simulation at a single temperature;
 2) T_Helper.sh: wraps up run.sh in order to run the simulation of interesting thermodynamical quantities at different temperatures.
