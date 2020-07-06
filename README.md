@@ -15,4 +15,4 @@ There is a notebook NotebokNN for each folder ExerciseNN, and occasionally subfo
 - [Exercise11](https://github.com/mcaresein/NSL-Exercises/tree/master/Esercizio11)
 - [Exercise12](https://github.com/mcaresein/NSL-Exercises/tree/master/Esercizio12)
 
-Unless explicitly stated, each code should compile with `make` (maybe changing the compiler in the makefile), and sould be executed running `./<executable`
+Unless explicitly stated, each code should compile with `make` (maybe changing the compiler in the makefile), and sould be executed running `./<executable>`
